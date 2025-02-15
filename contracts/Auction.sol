@@ -1,20 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-/**
- * @title Auction
- * @dev A lossless auction contract where outbid bidders receive their bid back plus 10% of the new highest bid.
- */
+
 contract Auction {
     // State variables
-    address public immutable owner; // Owner of the auction (immutable for gas efficiency)
-    uint public immutable auctionEndTime; // End time of the auction (immutable for gas efficiency)
-    address public highestBidder; // Current highest bidder
-    uint public highestBid; // Current highest bid
-    bool public auctionEnded; // Flag indicating if the auction has ended
-    bool public paused; // Flag for emergency pause
+    address public immutable owner; 
+    uint public immutable auctionEndTime; 
+    address public highestBidder; 
+    uint public highestBid; 
+    bool public auctionEnded;
+    bool public paused; 
 
-    mapping(address => uint) public bids; // Mapping of bidder addresses to their bids
+    mapping(address => uint) public bids; 
 
     // Events
     event AuctionInitialized(address indexed owner, uint duration, uint endTime);
@@ -45,10 +42,7 @@ contract Auction {
         _;
     }
 
-    /**
-     * @dev Initializes the auction with a duration in seconds.
-     * @param _durationInSeconds Duration of the auction in seconds.
-     */
+  
     constructor(uint _durationInSeconds) {
         require(_durationInSeconds > 0, "Duration must be greater than zero");
 
@@ -58,9 +52,6 @@ contract Auction {
         emit AuctionInitialized(owner, _durationInSeconds, auctionEndTime);
     }
 
-    /**
-     * @dev Places a bid on the auction. Outbid bidders receive a refund plus 10% of the new bid.
-     */
     function bid() public payable onlyBeforeEnd whenNotPaused {
         require(msg.value > highestBid, "Bid must be higher than current highest bid");
 
@@ -80,9 +71,6 @@ contract Auction {
         emit NewBid(msg.sender, msg.value);
     }
 
-    /**
-     * @dev Ends the auction after the duration has passed.
-     */
     function endAuction() public onlyAfterEnd {
         require(!auctionEnded, "Auction already ended");
         auctionEnded = true;
@@ -90,9 +78,6 @@ contract Auction {
         emit AuctionEnded(highestBidder, highestBid);
     }
 
-    /**
-     * @dev Allows the owner to withdraw funds after the auction ends.
-     */
     function withdraw() public onlyAfterEnd onlyOwner {
         require(auctionEnded, "Auction has not ended");
 
@@ -103,22 +88,13 @@ contract Auction {
         emit FundsWithdrawn(owner, balance);
     }
 
-    /**
-     * @dev Allows the owner to pause or unpause the auction in case of emergencies.
-     * @param _paused True to pause, false to unpause.
-     */
+   
     function setPaused(bool _paused) public onlyOwner {
         paused = _paused;
         emit AuctionPaused(_paused);
     }
 
-    /**
-     * @dev Returns the current status of the auction.
-     * @return endTime The end time of the auction.
-     * @return timeRemaining The time remaining until the auction ends (or 0 if ended).
-     * @return isEnded Whether the auction has ended.
-     * @return isPaused Whether the auction is paused.
-     */
+    
     function getAuctionStatus() public view returns (
         uint endTime,
         uint timeRemaining,

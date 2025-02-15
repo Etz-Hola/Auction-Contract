@@ -29,7 +29,7 @@ async function main() {
         console.log("Bidder 2 balance:", ethers.formatEther(bidder2Balance), "ETH");
 
         // Check if accounts have sufficient funds for bidding
-        const minBalance = ethers.parseEther("0.002"); // Lowered minimum balance to 0.02 ETH
+        const minBalance = ethers.parseEther("0.002"); 
         if (ownerBalance < minBalance || bidder1Balance < minBalance || bidder2Balance < minBalance) {
             throw new Error("One or more accounts have insufficient funds. Please fund the accounts on Lisk Sepolia.");
         }
