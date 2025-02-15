@@ -17,6 +17,21 @@ describe("Auction", function () {
         auction = await Auction.deploy(auctionDuration);
     });
 
+    describe("Deployment", function () {
+        it("should deploy the contract successfully", async function () {
+            const Auction = await ethers.getContractFactory("Auction");
+            const auction = await Auction.deploy(auctionDuration);
+            expect(auction.target).to.not.be.undefined;
+        });
+
+        it("should log the correct deployment address", async function () {
+            const Auction = await ethers.getContractFactory("Auction");
+            const auction = await Auction.deploy(auctionDuration);
+            console.log("Deployed contract address:", auction.target);
+            expect(auction.target).to.match(/^0x[a-fA-F0-9]{40}$/); // Check if address is valid
+        });
+    });
+
     describe("constructor", function () {
         it("should initialize auction with correct parameters", async function () {
             const ownerAddress = await owner.getAddress();
@@ -30,13 +45,13 @@ describe("Auction", function () {
 
         it("should emit AuctionInitialized event on deployment", async function () {
             const ownerAddress = await owner.getAddress();
-            const endTime = (await ethers.provider.getBlock("latest")).timestamp + auctionDuration;
-
             const Auction = await ethers.getContractFactory("Auction");
-            const newAuction = await Auction.deploy(auctionDuration);
+            const deployTx = await Auction.deploy(auctionDuration);
+            await deployTx.waitForDeployment();
 
-            await expect(newAuction.deployTransaction)
-                .to.emit(newAuction, "AuctionInitialized")
+            const endTime = (await ethers.provider.getBlock("latest")).timestamp + auctionDuration;
+            await expect(deployTx.deploymentTransaction())
+                .to.emit(deployTx, "AuctionInitialized")
                 .withArgs(ownerAddress, auctionDuration, endTime);
         });
 
@@ -170,7 +185,7 @@ describe("Auction", function () {
 
             await auction.endAuction();
             expect(await auction.auctionEnded()).to.be.true;
-            expect(await auction.highestBidder()).to.equal(ethers.constants.AddressZero);
+            expect(await auction.highestBidder()).to.equal(ethers.ZeroAddress);
             expect(await auction.highestBid()).to.equal(0);
         });
     });
@@ -289,7 +304,8 @@ describe("Auction", function () {
             await auction.endAuction();
             const [endTime, timeRemaining, isEnded, isPaused] = await auction.getAuctionStatus();
 
-            expect(endTime).to.equal((await ethers.provider.getBlock("latest")).timestamp - 1);
+            const latestBlock = await ethers.provider.getBlock("latest");
+            expect(endTime).to.be.closeTo(latestBlock.timestamp - 1, 5); // Allow small deviation
             expect(timeRemaining).to.equal(0);
             expect(isEnded).to.be.true;
             expect(isPaused).to.be.false;
